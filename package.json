@@ -1,0 +1,14 @@
+{
+  "name": "nimble-chat",
+  "version": "1.0.0",
+  "repository": "https://github.com/harshk341/nimble-chat.git",
+  "author": "Harsh Kumar <harsh341kumar@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "install:all": "concurrently \"yarn --cwd client install\" \"yarn --cwd server install\"",
+    "dev": "concurrently \"yarn --cwd server dev\" \"yarn --cwd client dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
