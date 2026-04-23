@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./dist/app.js",
-    "dev": "ts-node ./src/app.ts"
+    "dev": "nodemon --watch src --exec ts-node ./src/app.ts",
+    "clean": "rm -rf dist && echo Done."
   },
   "keywords": [],
   "author": "",
@@ -18,6 +19,7 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.1.0",
+    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },

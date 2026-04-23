@@ -244,15 +244,21 @@ const Dashboard = () => {
             <span className="inline-block w-2/3 h-1 rounded-lg bg-(--text)"></span>
           </button>
         </div>
-        <ul className="flex-1 p-4 overflow-y-auto space-y-2">
+        <ul className="flex-1 p-4 overflow-y-auto flex flex-col gap-0.5">
           {loadingMsg ? (
             <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
           ) : (
-            messages.map((msg) => (
-              <li>
-                {`${msg.sender === user?._id ? "You" : "Friend"} :- ${msg.content}`}
-              </li>
-            ))
+            messages.map((msg) => {
+              const isSender = msg.sender === user?._id;
+
+              return (
+                <li
+                  className={`${isSender ? "bg-slate-200 self-end" : "bg-slate-600 self-start text-white"} p-2 rounded-md max-w-3/4`}
+                >
+                  {msg.content}
+                </li>
+              );
+            })
           )}
         </ul>
         <form
