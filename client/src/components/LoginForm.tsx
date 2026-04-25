@@ -2,6 +2,8 @@ import { useState } from "react";
 import useSocket from "../hooks/useSocket";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
+import apiCaller from "../utils/apiCaller";
+import type { User } from "../types";
 
 interface LoginFormData {
   email: string;
@@ -11,6 +13,13 @@ interface LoginFormData {
 interface LoginFormError {
   email?: string;
   password?: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  user: User;
+  message: string;
+  token: string;
 }
 
 const initialFormData = {
@@ -59,17 +68,15 @@ const LoginForm = () => {
 
       setIsLoading(true);
 
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_API}/auth/login`,
-        formData,
-      );
-      axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+      const data: ApiResponse = await apiCaller.post("/auth/login", formData);
+      apiCaller.defaults.headers.common["Authorization"] =
+        `Bearer ${data.token}`;
 
       login(data.user);
       initializeSocketAndJoin(data.user._id);
 
       setFormData(initialFormData);
-      alert(JSON.stringify(data));
+      alert(data.message);
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
         alert(JSON.stringify(error.response.data));

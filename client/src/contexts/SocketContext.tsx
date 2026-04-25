@@ -29,8 +29,6 @@ const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const newSocket = io(import.meta.env.VITE_SOCKET_API);
 
     newSocket.on("connect", () => {
-      console.log("connected to socket server");
-
       newSocket.emit("join", userId);
     });
 
