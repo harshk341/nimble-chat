@@ -3,7 +3,7 @@ import useSWR from "swr";
 import useAuth from "../hooks/useAuth";
 import useSocket from "../hooks/useSocket";
 import apiCaller from "../utils/apiCaller";
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import type { User } from "../types";
 
 const Sidebar: React.FC<{
@@ -16,7 +16,6 @@ const Sidebar: React.FC<{
     data: users = [],
     error,
     isLoading,
-    isValidating,
     mutate,
   } = useSWR<User[], AxiosError | Error, string>("/users", (url) =>
     apiCaller.get(url).then((result) => result.data),
@@ -76,7 +75,7 @@ const Sidebar: React.FC<{
   }, [socket, fetchNewUsers]);
 
   if (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       return <div>Error: {error.message}</div>;
     } else {
       return <div>Unexpected Error: {error.message}</div>;
@@ -87,7 +86,7 @@ const Sidebar: React.FC<{
     <>
       <div className="hidden h-full md:basis-1/4 border-r-2 border-r-slate-300 md:flex flex-col">
         <ul className="flex flex-col flex-1 gap-2 mt-3 px-3 overflow-y-auto">
-          {isLoading || isValidating ? (
+          {isLoading ? (
             <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
           ) : (
             usersList.map((user) => (
@@ -122,7 +121,7 @@ const Sidebar: React.FC<{
           <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
           <div className="relative w-full max-w-2xs bg-white h-full shadow flex flex-col">
             <ul className="flex flex-col flex-1 gap-2 mt-3 px-3 overflow-y-auto">
-              {isLoading || isValidating ? (
+              {isLoading ? (
                 <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
               ) : (
                 usersList.map((user) => (

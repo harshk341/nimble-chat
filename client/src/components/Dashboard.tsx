@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import useAuth from "../hooks/useAuth";
 import useSocket from "../hooks/useSocket";
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import apiCaller from "../utils/apiCaller";
 import Sidebar from "./Sidebar";
 
@@ -82,12 +82,12 @@ const Dashboard = () => {
   useEffect(() => {
     const ele = msgRef.current;
     if (ele) {
-      ele.scrollTo({ top: ele.scrollHeight, behavior: "smooth" });
+      ele.scrollTo({ top: ele.scrollHeight, behavior: "instant" });
     }
   }, [messages]);
 
   if (error) {
-    if (error instanceof AxiosError) {
+    if (axios.isAxiosError(error)) {
       return <div>Error: {error.message}</div>;
     } else {
       return <div>Unexpected Error: {error.message}</div>;
@@ -119,47 +119,55 @@ const Dashboard = () => {
             <span className="inline-block w-2/3 h-1 rounded-lg bg-(--text)"></span>
           </button>
         </div>
-        <ul
-          ref={msgRef}
-          className="flex-1 p-4 overflow-y-auto flex flex-col gap-0.5"
-        >
-          {isLoading ? (
-            <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
-          ) : (
-            messages.map((msg) => {
-              const isSender = msg.sender === user?._id;
+        {selectedUser ? (
+          <>
+            <ul
+              ref={msgRef}
+              className="flex-1 p-4 overflow-y-auto flex flex-col gap-0.5"
+            >
+              {isLoading ? (
+                <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
+              ) : (
+                messages.map((msg) => {
+                  const isSender = msg.sender === user?._id;
 
-              return (
-                <li
-                  key={msg._id}
-                  className={`${isSender ? "bg-slate-200 self-end" : "bg-slate-600 self-start text-white"} p-2 rounded-md max-w-3/4`}
-                >
-                  {msg.content}
-                </li>
-              );
-            })
-          )}
-        </ul>
-        <form
-          onSubmit={handleSubmit}
-          className="flex items-center w-full px-2 py-3 gap-2"
-        >
-          <input
-            type="text"
-            autoComplete="off"
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            value={inputValue}
-            placeholder="Type a message"
-            className="flex-1 px-3 py-4 bg-slate-200 rounded border-slate-300"
-          />
-          <button
-            type="submit"
-            className="bg-slate-600 text-white p-4 rounded cursor-pointer"
-          >
-            Send
-          </button>
-        </form>
+                  return (
+                    <li
+                      key={msg._id}
+                      className={`${isSender ? "bg-slate-200 self-end" : "bg-slate-600 self-start text-white"} p-2 rounded-md max-w-3/4`}
+                    >
+                      {msg.content}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center w-full px-2 py-3 gap-2"
+            >
+              <input
+                type="text"
+                autoComplete="off"
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                value={inputValue}
+                placeholder="Type a message"
+                className="flex-1 px-3 py-4 bg-slate-200 rounded border-slate-300"
+              />
+              <button
+                type="submit"
+                className="bg-slate-600 text-white p-4 rounded cursor-pointer"
+              >
+                Send
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="flex items-center justify-center flex-1">
+            <span>Select a chat to start messaging</span>
+          </div>
+        )}
       </div>
     </div>
   );
