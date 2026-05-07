@@ -1,18 +1,24 @@
-import { Server } from "socket.io";
+import { Server, Namespace } from "socket.io";
 import { logger } from "../helpers";
 import Message from "../models/Message";
 import { Server as HttpServer } from "node:http";
+import { randomUUID } from "node:crypto";
 
 const onlineUser = new Map<string, Set<string>>();
 const socketToUser = new Map<string, string>();
-let io: Server;
+const waitingUsers: string[] = [];
+let generalChannel: Namespace;
 
 export const initSocket = (server: HttpServer) => {
-  io = new Server(server, { cors: { origin: "*" } });
+  const io = new Server(server, { cors: { origin: "*" } });
+
+  generalChannel = io.of("/general");
+  const randomChannel = io.of("/random");
 
   logger("✅socket setup");
 
-  io.on("connection", (socket) => {
+  // working after JWT authentication using REST
+  generalChannel.on("connection", (socket) => {
     socket.on("join", (userId: string) => {
       if (!onlineUser.has(userId)) {
         onlineUser.set(userId, new Set());
@@ -21,7 +27,7 @@ export const initSocket = (server: HttpServer) => {
       onlineUser.get(userId)!.add(socket.id);
       socketToUser.set(socket.id, userId);
 
-      io.emit("online-users", Array.from(onlineUser.keys()));
+      generalChannel.emit("online-users", Array.from(onlineUser.keys()));
     });
 
     socket.on("disconnect", () => {
@@ -40,7 +46,7 @@ export const initSocket = (server: HttpServer) => {
 
       socketToUser.delete(socket.id);
 
-      io.emit("online-users", Array.from(onlineUser.keys()));
+      generalChannel.emit("online-users", Array.from(onlineUser.keys()));
     });
 
     socket.on("send-message", async ({ sender, receiver, content }) => {
@@ -50,11 +56,15 @@ export const initSocket = (server: HttpServer) => {
       const senderSocketIds = onlineUser.get(sender);
 
       if (receiverSocketIds) {
-        io.to([...receiverSocketIds]).emit("receiver-message", message);
+        generalChannel
+          .to([...receiverSocketIds])
+          .emit("receiver-message", message);
       }
 
       if (senderSocketIds) {
-        io.to([...senderSocketIds]).emit("receiver-message", message);
+        generalChannel
+          .to([...senderSocketIds])
+          .emit("receiver-message", message);
       }
     });
 
@@ -62,15 +72,51 @@ export const initSocket = (server: HttpServer) => {
       const receiverSocketIds = onlineUser.get(receiver);
 
       if (receiverSocketIds) {
-        io.to([...receiverSocketIds]).emit("user-typing", sender);
+        generalChannel.to([...receiverSocketIds]).emit("user-typing", sender);
+      }
+    });
+  });
+
+  randomChannel.on("connection", (socket) => {
+    if (waitingUsers.length > 0) {
+      const partner = waitingUsers.shift()!;
+      const roomId = `${partner}_${socket.id}`;
+
+      socket.join(roomId);
+      randomChannel.sockets.get(partner)?.join(roomId);
+
+      randomChannel.to(roomId).emit("paired", roomId);
+    } else {
+      waitingUsers.push(socket.id);
+      socket.emit("waiting");
+    }
+
+    socket.on("send-message", ({ roomId, ...data }) => {
+      randomChannel
+        .to(roomId)
+        .emit("receive-message", { id: randomUUID(), ...data });
+    });
+
+    socket.on("disconnecting", () => {
+      const rooms = [...socket.rooms].filter((r) => r !== socket.id);
+
+      rooms.forEach((roomId) => {
+        randomChannel.to(roomId).emit("partner-disconnected");
+      });
+    });
+
+    socket.on("disconnect", () => {
+      const index = waitingUsers.indexOf(socket.id);
+      if (index > -1) {
+        waitingUsers.splice(index, 1);
       }
     });
   });
 };
 
-export const getIO = () => {
-  if (!io) {
+export const getGeneralChannel = () => {
+  if (!generalChannel) {
     throw new Error("Socket.io not initialized");
   }
-  return io;
+  return generalChannel;
 };

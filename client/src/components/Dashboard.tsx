@@ -5,6 +5,7 @@ import useSocket from "../hooks/useSocket";
 import axios, { AxiosError } from "axios";
 import apiCaller from "../utils/apiCaller";
 import Sidebar from "./Sidebar";
+import Loader from "./Loader";
 
 interface Message {
   _id: string;
@@ -126,7 +127,7 @@ const Dashboard = () => {
               className="flex-1 p-4 overflow-y-auto flex flex-col gap-0.5"
             >
               {isLoading ? (
-                <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
+                <Loader classname="w-10 h-10 border-r-4 border-t-4 border-t-slate-700 " />
               ) : (
                 messages.map((msg) => {
                   const isSender = msg.sender === user?._id;
@@ -153,7 +154,7 @@ const Dashboard = () => {
                 onKeyDown={handleKeyDown}
                 value={inputValue}
                 placeholder="Type a message"
-                className="flex-1 px-3 py-4 bg-slate-200 rounded border-slate-300"
+                className="w-full px-3 py-4 bg-slate-200 rounded border-slate-300"
               />
               <button
                 type="submit"

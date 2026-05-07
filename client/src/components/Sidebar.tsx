@@ -5,6 +5,7 @@ import useSocket from "../hooks/useSocket";
 import apiCaller from "../utils/apiCaller";
 import axios, { AxiosError } from "axios";
 import type { User } from "../types";
+import Loader from "./Loader";
 
 const Sidebar: React.FC<{
   isOpen: boolean;
@@ -87,7 +88,7 @@ const Sidebar: React.FC<{
       <div className="hidden h-full md:basis-1/4 border-r-2 border-r-slate-300 md:flex flex-col">
         <ul className="flex flex-col flex-1 gap-2 mt-3 px-3 overflow-y-auto">
           {isLoading ? (
-            <span className="animate-spin w-10 h-10 border-4 border-slate-100 border-t-slate-700 rounded-full inline-block"></span>
+            <Loader classname="w-10 h-10 border-r-4 border-t-4 border-t-slate-700" />
           ) : (
             usersList.map((user) => (
               <li key={user._id}>
