@@ -9,6 +9,8 @@ const RandomChat = () => {
   const msgRef = useRef<HTMLUListElement>(null);
   const [confirm, setConfirm] = useState(false);
   const [partnerDisconnect, setPartnerDisconnect] = useState(false);
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
   usePreventReload(!!socket?.connected || !!roomId);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,6 +20,8 @@ const RandomChat = () => {
 
   const handleKeyDown = () => {
     if (!socket || !roomId) return;
+
+    socket.emit("typing", roomId);
   };
 
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -46,6 +50,8 @@ const RandomChat = () => {
   useEffect(() => {
     if (!socket || !roomId) return;
 
+    let timeoutRef = typingTimeout.current;
+
     const handleReceiveMessage = (msg: any) => {
       setMessages((prevMessages) => {
         return [...prevMessages, msg];
@@ -56,13 +62,27 @@ const RandomChat = () => {
       setPartnerDisconnect(true);
     };
 
+    const handlePartnerTyping = () => {
+      setPartnerTyping(true);
+
+      if (timeoutRef) clearTimeout(timeoutRef);
+
+      timeoutRef = setTimeout(() => {
+        setPartnerTyping(false);
+      }, 2000);
+    };
+
     socket.on("receive-message", handleReceiveMessage);
+
+    socket.on("partner-typing", handlePartnerTyping);
 
     socket.on("partner-disconnected", handlePartnerDisconnect);
 
     return function () {
       socket.removeListener("receive-message", handleReceiveMessage);
+      socket.removeListener("partner-typing", handlePartnerTyping);
       socket.removeListener("partner-disconnected", handlePartnerDisconnect);
+      if (timeoutRef) clearTimeout(timeoutRef);
     };
   }, [socket, roomId]);
 
@@ -71,7 +91,7 @@ const RandomChat = () => {
     if (ele) {
       ele.scrollTo({ top: ele.scrollHeight, behavior: "instant" });
     }
-  }, [messages]);
+  }, [messages, partnerTyping]);
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -90,6 +110,13 @@ const RandomChat = () => {
             </li>
           );
         })}
+        {partnerTyping && (
+          <li className="flex self-start mt-4 rounded-md max-w-3/4 gap-1">
+            <span className="w-2 h-2 rounded-full inline-block bg-slate-600 animate-bounce [animation-delay:-0.3s] [animation-duration:0.5s]"></span>
+            <span className="w-2 h-2 rounded-full inline-block bg-slate-600 animate-bounce [animation-delay:-0.15s] [animation-duration:0.5s]"></span>
+            <span className="w-2 h-2 rounded-full inline-block bg-slate-600 animate-bounce [animation-duration:0.5s]"></span>
+          </li>
+        )}
       </ul>
       <div className="flex items-center w-full p-2 gap-2">
         <button

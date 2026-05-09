@@ -105,6 +105,10 @@ export const initSocket = (server: HttpServer) => {
       });
     });
 
+    socket.on("typing", (roomId) => {
+      socket.to(roomId).emit("partner-typing");
+    });
+
     socket.on("disconnect", () => {
       const index = waitingUsers.indexOf(socket.id);
       if (index > -1) {
